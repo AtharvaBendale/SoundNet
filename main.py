@@ -22,7 +22,7 @@ def send() -> None:
     print(f"The combined transmission is : 01{preamble(bits)}{''.join([str(element) for element in encoding])}")
     input("Press Enter to start transmission ")
     sender = Sender()
-    encoded_audio = sender.encode_bits_to_audio([0, 1] + [(bits>>i) & 1 for i in range(4, -1, -1)] + encoding )
+    encoded_audio = sender.encode_bits_to_audio([(bits>>i) & 1 for i in range(4, -1, -1)] + encoding )
     sender.send_audio(encoded_audio)
 
 def recv():
