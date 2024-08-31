@@ -45,7 +45,7 @@ def recv():
     
     # Preparing the receiver to receive the audio signals by calibrating it for background noise
     receiver = Receiver(64)
-    receiver.calibrate(bit_duration=0.03)
+    receiver.calibrate(duration=0.03)
 
     # Receiving the audio signals and decoding them to binary form
     # bits is the length of the original message and transmission is the received message
