@@ -36,7 +36,7 @@ class Sender:
         converted_array = np.array([])
         message=np.array(message)
         n=int(math.log2(base))
-        if len(message)%n!= 0:
+        if len(message)%n != 0:
             message = np.append(message, np.zeros(n - len(message)%n))
         for i in range(0, len(message), n):
             num = 0
@@ -98,13 +98,8 @@ class Sender:
                             rate=sample_rate,
                             output=True)
         
-        # Playing the audio signal
-        while(True):
-            if(math.floor(time.time()*10)%2==0):
-                stream.write(audio_signal.astype(np.float32).tobytes())
-                break
-        
-        # Closing the stream
+
+        stream.write(audio_signal.astype(np.float32).tobytes())
         stream.stop_stream()
         stream.close()
         audio.terminate()
