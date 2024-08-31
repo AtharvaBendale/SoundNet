@@ -5,13 +5,9 @@ import math
 
 class Sender:
 
-    def __init__(self, messsage : int | list[str]):
-        self.len=64 
-
-        self.frequencies = np.array([800])
-        for i in range(self.len):
-            self.frequencies = np.append(self.frequencies, self.frequencies[-1]+200)
-
+    def __init__(self):
+        self.base =64  #TODO: pass the base to be used from main function
+        self.frequencies = np.arange(800, 800 + 200 * self.base , 200)
 
     def generate_tone(self, frequency: int, duration: float, sample_rate: int = 44100, amplitude: float=1):
         '''
@@ -28,7 +24,7 @@ class Sender:
         wave = amplitude * np.sin(2 * np.pi * frequency * t)
         return wave
     
-    def num_conv(self, message: list[int], base : int) -> np.ndarray:
+    def convert_list(self, message: list[int], base : int) -> np.ndarray:
         """
         Convert a list of bits to a list of integers.
         Parameters:
@@ -61,32 +57,28 @@ class Sender:
         """
 
         transmission=np.array([1,1,1,1,1,-1])
-        #preamble 10-14
-        #TODO: remove special sequence from Atharva's main.py
-        transmission = np.append(transmission, self.num_conv(message[6:11], base))
-
-        #actual message
-        transmission = np.append(transmission, self.num_conv(message[11:], base))
+        transmission = np.append(transmission, self.convert_list(message[0:5], base))   # preamble
+        transmission = np.append(transmission, self.convert_list(message[5:], base))    # tranmission message
         return transmission
 
-    def encode_bits_to_audio(self, bits: np.ndarray, sample_rate: int = 44100, duration: float =0.15, amplitude: float =1):
+    def encode_bits_to_audio(self, bits: np.ndarray, sample_rate: int = 44100, duration: float = 0.3, amplitude: float =1):
         """
         Encode a list of bits into an audio signal.
         Parameters:
             bits (np.ndarray): List of bits (0s and 1s)
             sample_rate (int): Sampling rate in Hz
-            duration (float): Duration of each bit's tone in seconds
+            duration (float): Duration of each signal in seconds
             amplitude (float): Amplitude of the wave
         Returns
             audio_signal (np.ndarray): Numpy array containing the audio signal
         """
         audio_signal = np.array([])
         
-        tranmission_msg_in_changed_base = self.change_base(bits, self.len)
+        tranmission_msg_in_changed_base = self.change_base(bits, self.base)
 
         for i in tranmission_msg_in_changed_base:
-            audio_signal = np.append(audio_signal, self.generate_tone(self.frequencies[int(i)], duration, sample_rate, amplitude))
-            audio_signal = np.append(audio_signal, self.generate_tone(self.frequencies[0], duration, sample_rate, amplitude))
+            audio_signal = np.append(audio_signal, self.generate_tone(self.frequencies[int(i)], duration/2, sample_rate, amplitude))
+            audio_signal = np.append(audio_signal, self.generate_tone(self.frequencies[0], duration/2, sample_rate, amplitude))
         print(tranmission_msg_in_changed_base)
         return audio_signal
 
