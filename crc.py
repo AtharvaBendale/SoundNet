@@ -27,6 +27,13 @@ CRC_POLY = {
 }
 
 def preamble(bits : int) -> int:
+    '''
+        Returns the binary representation of the given integer in a string format
+        Parameters:
+            bits (int): The integer to be converted to binary
+        Returns:
+            preamble (str): The binary representation of the given integer
+    '''
     preamble_bits = [ str((bits>>i) & 1) for i in range(4, -1, -1)]
     return "".join(preamble_bits)
 
