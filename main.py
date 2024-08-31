@@ -30,7 +30,7 @@ def send() -> None:
     print(f"The combined transmission is : 01{preamble(bits)}{''.join([str(element) for element in encoding])}")
 
     # Encoding the preamble and the message to be transmitted to audio signals
-    sender = Sender()
+    sender = Sender(64)
     encoded_audio = sender.encode_bits_to_audio([(bits>>i) & 1 for i in range(4, -1, -1)] + encoding )
 
     input("Press Enter to start transmission ")
