@@ -36,7 +36,7 @@ class Receiver:
         Parameters:
             stream: The open audio stream
             duration (float): Duration of the audio signal to receive in seconds
-            samcorrectedple_rate (int): Sampling rate in Hz
+            sample_rate (int): Sampling rate in Hz
         Returns:
             Out (np.ndarray): Numpy array containing the received audio signal
         """
@@ -48,7 +48,13 @@ class Receiver:
         return np.frombuffer(b''.join(frames), dtype=np.float32)
 
     def calibrate(self, sample_rate: int = 44100, bit_duration: float = 0.04):
-        
+        """
+        Receive a white noise signal to calibrate the noise levels.
+
+        Parameters:
+            sample_rate (int): Sampling rate in Hz
+            bit_duration (float): Duration of each bit in seconds
+        """
         segment_size = int(sample_rate*bit_duration)
         white_noise_sample_size = 50
 
@@ -78,16 +84,23 @@ class Receiver:
         return reduced_noise_signal
 
     def decode_audio_to_bits(self, sample_rate: int = 44100, bit_duration: float = 0.4):
+        """
+        Receive an audio signal and decode it to bits.
+        
+        Parameters:
+            sample_rate (int): Sampling rate in Hz
+            bit_duration (float): Duration of each bit in seconds
+        Returns:
+            (int, list): The original message length and the received message bits after preamble
+        """
         message_crc = []
         flag = 0
         original_message_length = 0
         transmitted_message_length = 0
         preamble = []
-        peaks = []
         prev=0
-        stream, audio = self.open_audio_stream(sample_rate)
-
         switch_zero_count = 0
+        stream, audio = self.open_audio_stream(sample_rate)
 
         print("Starting to receive audio: --------------------------------\n\n")  
         while True:
