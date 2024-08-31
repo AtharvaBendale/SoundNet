@@ -1,6 +1,5 @@
 import numpy as np
 import pyaudio
-import time
 import math
 
 class Sender:

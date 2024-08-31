@@ -1,8 +1,6 @@
 import pyaudio
 import numpy as np
 from scipy import signal
-from scipy.fft import fft, fftfreq
-# import noisereduce as nr
 from crc import *
 import math
 
