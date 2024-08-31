@@ -50,7 +50,7 @@ class Receiver:
 
     def calibrate(self, sample_rate: int = 44100, duration: float = 0.03):
         """
-        Calculates the noise power for each frequency range
+        Calculates the ambient noise power for each frequency range
 
         Parameters:
             sample_rate (int): Sampling rate in Hz
