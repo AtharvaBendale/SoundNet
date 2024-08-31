@@ -33,9 +33,10 @@
 % Preamble, Manchester encoding, etc.
 To ensure the proper reception of transmitted signal from the sender's device, we are using the following methods:
 \begin{itemize}
-    \item Preamble : The preamble allows the receiver to synchronize with the incoming signal. By identifying the preamble, the receiver can align its timing to accurately interpret the subsequent data. At the end of preamble (i.e. at the start of the original transmission) we transmit a special sequence which marks the starting of the message.
 
-    \item Differential Manchester Encoding: All of our messages are modified according to Differential Manchester Encoding (DME) for better synchronization
+    \item \textbf{Special Sequence}: We are using a special sequence of bits to mark the start of the message. This sequence is \texttt{000001}. When the reciever detects at leas 5 consecutive 0s, followed by a 1, it starts listening for the preamble. 
+    \item \textbf{Preamble} : The preamble (5 bits) consists of the length of the original message encoded in binary. We then use a function \texttt{transmissionLength()} to get the length of the transmitted message after preamble, and receive the message accordingly. 
+    \item \textbf{Return To Zero}: We are using the Return to Zero (RZ) encoding scheme to encode the bits. In this scheme, the signal returns to zero after each bit interval. This ensures that the receiver can easily detect the start and end of each bit. To encode a 0, we transmit a low frequency tone (1000 Hz) for half the bit duration and a middle frequency tone (2000 Hz) for the other half. For a 1, we transmit a high frequency tone (4000 Hz) for the first half and a middle frequency tone (2000 Hz) for the second half.  
 
 
 \end{itemize}
@@ -91,13 +92,29 @@ for _ in range(0, int(sample_rate / 1024 * duration)):
 \end{verbatim}
 \end{tcolorbox}
 \subsection{Noise Reduction}
-To mitigate noise, we apply a noise reduction step using the \texttt{noisereduce} library. This library efficiently reduces background noise (since air is a very noisy medium) while preserving the main signal content. 
+To mitigate noise, we run the \texttt{calibrate} function to determine the average noise level in various frequency ranges of the received audio signal. We then use this information to filter out noise from the audio signal by subtracting the average noise level from the signal's power spectrum. This process helps improve the accuracy of frequency detection and bit decoding.
 \begin{tcolorbox}[colback=black!10!white, colframe=black]
 \begin{verbatim}
-reduced_noise_signal = nr.reduce_noise(y=audio_signal, sr=sample_rate)
+for _ in range(0, segment_size*white_noise_sample_size, segment_size):
+  segment = self.receive_audio(stream, bit_duration, sample_rate)
+  freqs, power = signal.welch(segment, sample_rate)
+  low_freq_power = np.sum(power[(freqs >= self.low_freq-100) & 
+                                                    (freqs <= self.low_freq+100)])
+    mid_freq_power = np.sum(power[(freqs >= self.mid_freq-100) & 
+                                                    (freqs <= self.mid_freq+100)])
+    high_freq_power = np.sum(power[(freqs >= self.high_freq-100) & 
+                                                    (freqs <= self.high_freq+100)])
+
+    self.low_noise_avg += low_freq_power
+    self.high_noise_avg += high_freq_power
+    self.mid_noise_avg += mid_freq_power
+
+self.low_noise_avg = self.low_noise_avg / white_noise_sample_size
+self.high_noise_avg = self.high_noise_avg / white_noise_sample_size
+self.mid_noise_avg = self.mid_noise_avg / white_noise_sample_size
+
 \end{verbatim}
 \end{tcolorbox}
-
 
 \subsection{Frequency-Based Decoding}
 

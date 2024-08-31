@@ -12,7 +12,7 @@ class Receiver:
         self.mid_noise_avg = 0
         self.high_freq = 4000
         self.low_freq = 1000
-        self.zero_freq = 2000
+        self.mid_freq = 2000
 
     def open_audio_stream(self, sample_rate: int = 44100):
         """
@@ -64,7 +64,7 @@ class Receiver:
             segment = self.receive_audio(stream, bit_duration, sample_rate)
             freqs, power = signal.welch(segment, sample_rate)
             low_freq_power = np.sum(power[(freqs >= self.low_freq-100) & (freqs <= self.low_freq+100)])
-            mid_freq_power = np.sum(power[(freqs >= self.zero_freq-100) & (freqs <= self.zero_freq+100)])
+            mid_freq_power = np.sum(power[(freqs >= self.mid_freq-100) & (freqs <= self.mid_freq+100)])
             high_freq_power = np.sum(power[(freqs >= self.high_freq-100) & (freqs <= self.high_freq+100)])
 
             self.low_noise_avg += low_freq_power
@@ -108,8 +108,8 @@ class Receiver:
 
             freqs, power = signal.welch(segment, sample_rate)
             low_freq_power = abs(np.sum(power[(freqs >= self.low_freq-100) & (freqs <= self.low_freq+100)]) - self.low_noise_avg)
+            mid_freq_power = abs(np.sum(power[(freqs >= self.mid_freq-100) & (freqs <= self.mid_freq+100)]) - self.mid_noise_avg)
             high_freq_power = abs(np.sum(power[(freqs >= self.high_freq-100) & (freqs <= self.high_freq+100)]) - self.high_noise_avg)
-            mid_freq_power = abs(np.sum(power[(freqs >= self.zero_freq-100) & (freqs <= self.zero_freq+100)]) - self.mid_noise_avg)
 
             if high_freq_power >= max(low_freq_power, mid_freq_power) and prev==-1:
                 if switch_zero_count >= 4:
@@ -135,8 +135,8 @@ class Receiver:
 
             freqs, power = signal.welch(segment, sample_rate)
             low_freq_power = abs(np.sum(power[(freqs >= self.low_freq-100) & (freqs <= self.low_freq+100)]) - self.low_noise_avg)
+            mid_freq_power = abs(np.sum(power[(freqs >= self.mid_freq-100) & (freqs <= self.mid_freq+100)]) - self.mid_noise_avg)
             high_freq_power = abs(np.sum(power[(freqs >= self.high_freq-100) & (freqs <= self.high_freq+100)]) - self.high_noise_avg)
-            mid_freq_power = abs(np.sum(power[(freqs >= self.zero_freq-100) & (freqs <= self.zero_freq+100)]) - self.mid_noise_avg)
             
             if low_freq_power > max(high_freq_power,mid_freq_power):
                 bit = 0
