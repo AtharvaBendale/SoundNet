@@ -7,20 +7,21 @@ from crc import *
 import math
 
 class Receiver:
-    def __init__(self):
-        self.len=64
+    def __init__(self, base):
+        self.base= base
+        self.freq = np.arange(800, 800 + 200 * (self.base+1) , 200)
+        self.noise=np.array([0.0]*(self.base+1))
 
-        self.freq=np.array([800])
-        for _ in range(self.len):
-            self.freq=np.append(self.freq, self.freq[-1]+200)
-
-        self.noise=np.array([0.0]*(self.len+1))
     def open_audio_stream(self, sample_rate: int = 44100):
         """
         Open the audio stream.
         
-        :param sample_rate: Sampling rate in Hz
-        :return: The audio stream object
+        Parameters:
+            sample_rate (int): Sampling rate in Hz
+        
+        Returns:
+            stream: The audio stream object
+            audio: The audio object
         """
         audio = pyaudio.PyAudio()
         stream = audio.open(format=pyaudio.paFloat32,
@@ -34,10 +35,13 @@ class Receiver:
         """
         Receive an audio signal from the default audio input device.
 
-        :param stream: The open audio stream
-        :param duration: Duration of the audio signal to receive in seconds
-        :param samcorrectedple_rate: Sampling rate in Hz
-        :return: Numpy array containing the received audio signal
+        Parameters:
+            stream: The audio stream object
+            duration (float): Duration of each signal in seconds
+            sample_rate (int): Sampling rate in Hz
+
+        Returns:
+            np.ndarray: Numpy array containing the audio signal
         """
         frames = []
         for _ in range(0, int(sample_rate / 1024 * duration)):
@@ -46,60 +50,95 @@ class Receiver:
 
         return np.frombuffer(b''.join(frames), dtype=np.float32)
 
-    def calibrate(self, sample_rate: int = 44100, bit_duration: float = 0.04):
-        segment_size = int(sample_rate*bit_duration)
+    def calibrate(self, sample_rate: int = 44100, duration: float = 0.03):
+        """
+        Calculates the noise power for each frequency range
+
+        Parameters:
+            sample_rate (int): Sampling rate in Hz
+            duration (float): Duration of each measurement in seconds
+
+        """
+        segment_size = int(sample_rate*duration)
         white_noise_sample_size = 50
 
         stream, audio = self.open_audio_stream(sample_rate)
 
         for _ in range(0, segment_size*white_noise_sample_size, segment_size):
-            segment = self.receive_audio(stream, bit_duration, sample_rate)
+            segment = self.receive_audio(stream, duration, sample_rate)
             freqs, power = signal.welch(segment, sample_rate)
-            for i in range(self.len+1):
+            for i in range(self.base+1):
                 self.noise[i] += np.sum(power[(freqs >= self.freq[i]-100) & (freqs <= self.freq[i]+100)])
-        for i in range(self.len+1):
+        for i in range(self.base+1):
             self.noise[i] = self.noise[i]/white_noise_sample_size
         stream.stop_stream()
         stream.close()
         audio.terminate()
 
-    def index_to_bits(self, index:int):
+    def index_to_bits(self, index : int):
+        """
+        Convert an index to a list of bits.
+        Parameters:
+            index (int): Index to convert
+
+        Returns:
+            bits (np.ndarray): Numpy array containing the bits
+        """
         bits=np.array([])
         index=index-1
-        for _ in range(int(math.log2(self.len))):
+        for _ in range(int(math.log2(self.base))):
             bits=np.append(bits,int(index%2))
             index=index//2
         return bits[::-1].astype(int)
     
-    def preamble_check(self, preamble):
+    def preamble_check(self, preamble : np.ndarray):
+        """
+        Convert a preamble to an integer.
+        Parameters:
+            preamble (np.ndarray): Preamble to convert
+
+        Returns:
+            int: Integer converted from the preamble
+        """
         n=0
         for i in preamble:
             n=n*2+i
         return int(n)
 
     def decode_audio_to_bits(self, sample_rate: int = 44100, bit_duration: float = 0.3):
-        m_m = np.array([])
+        """
+        Decode an audio signal to a list of bits.
+
+        Parameters:
+            sample_rate (int): Sampling rate in Hz
+            bit_duration (float): Duration of each bit in seconds
+
+        Returns:
+            int: Length of the original message
+            list[int]: List of bits of the message after preamble
+        """
+        message_after_preamble = np.array([])
+        preamble = np.array([])
         flag = 0
+        switch_zero_count = 0
         original_message_length = 0
         transmitted_message_length = 0
-        m_p = np.array([])
-        # peaks = []
         prev=1
+        
         stream, audio = self.open_audio_stream(sample_rate)
 
-        switch_zero_count = 0
-
         print("Starting to receive audio: --------------------------------\n\n")  
+
         while True:
             segment = self.receive_audio(stream, bit_duration/10, sample_rate)
-            freq_power=np.array([0.0]*(self.len+1)) #0 is return to zero freq
+            freq_power=np.array([0.0]*(self.base+1)) 
             freqs, power = signal.welch(segment, sample_rate)
-            for i in range(self.len+1):
+            for i in range(self.base+1):
                 freq_power[i] = np.abs(np.sum(power[(freqs >= self.freq[i]-100) & (freqs <= self.freq[i]+100)]) - self.noise[i])
 
             if freq_power[-1] >= np.max(freq_power[:-1]) and prev==0: 
                 if switch_zero_count >= 4:
-                    print("high")
+                    print("Special sequence ends. Now recieving preamble ... \n\n")  
                     break
                 else:
                     switch_zero_count = 0
@@ -112,7 +151,7 @@ class Receiver:
                 prev=1
             else:
                 switch_zero_count=0
-                prev=np.argmax(freq_power) #if not mid 00 or 11
+                prev=np.argmax(freq_power) 
 
         self.receive_audio(stream, bit_duration*0.9, sample_rate)
         prev = 0
@@ -122,35 +161,34 @@ class Receiver:
             max_ind = 0
             segment = self.receive_audio(stream, bit_duration/10, sample_rate)
             freqs, power = signal.welch(segment, sample_rate)
-            for i in  range(self.len+1):
+            for i in  range(self.base+1):
                 freq_power[i] = np.abs(np.sum(power[(freqs >= self.freq[i]-100) & (freqs <= self.freq[i]+100)]) - self.noise[i])
             max_ind=np.argmax(freq_power)
             
             if prev == 0 and max_ind != 0:
                 if not flag:
-                    if len(m_p)+int(math.log2(self.len))>=5:
+                    if len(preamble)+int(math.log2(self.base))>=5:
                         flag=1
-                        m_p = np.append(m_p, self.index_to_bits(max_ind)[0:5-len(m_p)])
-                        original_message_length = self.preamble_check(m_p)
+                        preamble = np.append(preamble, self.index_to_bits(max_ind)[0:5-len(preamble)])
+                        original_message_length = self.preamble_check(preamble)
                         transmitted_message_length = int(transmissionLength(original_message_length))
 
                     else:
-                        m_p = np.append(m_p, self.index_to_bits(max_ind))
+                        preamble = np.append(preamble, self.index_to_bits(max_ind))
                 else:
-                    if len(m_m)+int(math.log2(self.len))>=transmitted_message_length:
-                        m_m = np.append(m_m, (self.index_to_bits(max_ind))[0:transmitted_message_length-len(m_m)])
+                    if len(message_after_preamble)+int(math.log2(self.base))>=transmitted_message_length:
+                        message_after_preamble = np.append(message_after_preamble, (self.index_to_bits(max_ind))[0:transmitted_message_length-len(message_after_preamble)])
                         break
                     else:
-                        m_m = np.append(m_m, self.index_to_bits(max_ind))
+                        message_after_preamble = np.append(message_after_preamble, self.index_to_bits(max_ind))
         stream.stop_stream()
         stream.close()
         audio.terminate()
         print("\n\nAudio reception complete: --------------------------------")
-        print("Preamble: ",m_p)
-        print("Transmitted message after preamble:", m_m)
-
-        assert len(m_m) == transmissionLength(original_message_length)
+        assert len(message_after_preamble) == transmissionLength(original_message_length)
+        
+        print("Preamble: ",preamble)
+        print("Transmitted message after preamble:", message_after_preamble)
         print(f"Original message length: {original_message_length}")
-
-        print(f"Transmitted message length after preamble: {len(m_m)}")
-        return original_message_length, list(m_m.astype(int))
+        print(f"Transmitted message length after preamble: {len(message_after_preamble)}")
+        return original_message_length, list(message_after_preamble.astype(int))
