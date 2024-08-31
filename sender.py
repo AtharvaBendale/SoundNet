@@ -5,8 +5,8 @@ import math
 
 class Sender:
 
-    def __init__(self):
-        self.base =64  #TODO: pass the base to be used from main function
+    def __init__(self, base):
+        self.base = base
         self.frequencies = np.arange(800, 800 + 200 * self.base , 200)
 
     def generate_tone(self, frequency: int, duration: float, sample_rate: int = 44100, amplitude: float=1):
