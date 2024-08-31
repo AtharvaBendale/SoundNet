@@ -168,6 +168,7 @@ class Receiver:
                     if len(preamble)+int(math.log2(self.base))>=5:
                         flag=1
                         preamble = np.append(preamble, self.index_to_bits(max_ind)[0:5-len(preamble)])
+                        print("Preamble recieved. Now recieving message ... \n\n")
                         original_message_length = self.preamble_check(preamble)
                         transmitted_message_length = int(transmissionLength(original_message_length))
 
@@ -182,7 +183,7 @@ class Receiver:
         stream.stop_stream()
         stream.close()
         audio.terminate()
-        print("\n\nAudio reception complete: --------------------------------")
+        print("\n\nAudio reception complete: --------------------------------\n\n")
         assert len(message_after_preamble) == transmissionLength(original_message_length)
         
         print("Preamble: ",preamble)
