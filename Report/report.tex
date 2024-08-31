@@ -134,8 +134,6 @@ else:
 
 By summing the power within predefined frequency ranges, we can classify each segment as either a 0 or a 1 depending on which frequency range exhibits higher power. This method improves the robustness of frequency detection compared to simply using the Fast Fourier Transform (FFT), as it better handles noisy signals and overlapping frequencies.
 
-\subsection{Message Beginning Detection}
-To accurately detect the start of a transmitted message, we introduce a preamble system. A predefined special subsequence \texttt{01111110} is being sent continuously initially. When this subsequence ends, the receiver starts listening for the preamble (consisting of the length of the message which follows). The receiver then listens to the message and employs the error-detection and error-correction mechanism as described above.
 
 \section{Citations}
 % \begin{tcolorbox}
