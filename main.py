@@ -28,8 +28,8 @@ def send() -> None:
 def recv():
     
     receiver = Receiver()
-    receiver.calibrate(bit_duration=0.04)
-    bits, transmission = receiver.decode_audio_to_bits()
+    receiver.calibrate(bit_duration=0.03)
+    bits, transmission = receiver.decode_audio_to_bits(bit_duration=0.3)
 
     message = decodeCrc(transmission = transmission, bits = bits)
 
