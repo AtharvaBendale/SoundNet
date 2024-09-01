@@ -29,7 +29,7 @@ class Receiver:
                             frames_per_buffer=1024)
         return stream, audio
 
-    def receive_audio(self, stream, duration: float, sample_rate: int = 44100):
+    def receive_audio(self, stream, duration: float, sample_rate: int = 44100)-> np.ndarray:
         """
         Receive an audio signal from the default audio input device.
 
@@ -73,7 +73,7 @@ class Receiver:
         stream.close()
         audio.terminate()
 
-    def index_to_bits(self, index : int):
+    def index_to_bits(self, index : int)-> np.ndarray:
         """
         Convert an index to a list of bits.
         Parameters:
@@ -89,7 +89,7 @@ class Receiver:
             index=index//2
         return bits[::-1].astype(int)
     
-    def preamble_check(self, preamble : np.ndarray):
+    def preamble_check(self, preamble : np.ndarray)-> int:
         """
         Convert a preamble to an integer.
         Parameters:

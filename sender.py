@@ -8,14 +8,14 @@ class Sender:
         self.base = base
         self.frequencies = np.arange(800, 800 + 200 * (self.base+1) , 200)
 
-    def generate_tone(self, frequency: int, duration: float, sample_rate: int = 44100, amplitude: float=1):
+    def generate_waves(self, frequency: int, duration: float, sample_rate: int = 44100, amplitude: float=1) -> np.ndarray:
         '''
-        Generate a sine wave tone of given frequency and duration.
+        Generate a sine waves of given frequency and duration.
         Parameters:
             frequency (int): Frequency of the tone in Hz
             duration (float): Duration of the tone in seconds
             sample_rate (int): Sampling rate in Hz (default: 44100)
-            amplitude (float): Amplitude of the wave (0.0 to 1.0, default: 0.5)
+            amplitude (float): Amplitude of the wave (0.0 to 1.0, default: 1)
         Returns:
             wave (np.ndarray): Numpy array containing the audio signal
         '''
@@ -60,7 +60,7 @@ class Sender:
         transmission = np.append(transmission, self.convert_list(message[5:], base))    # tranmission message
         return transmission
 
-    def encode_bits_to_audio(self, bits: np.ndarray, sample_rate: int = 44100, duration: float = 0.3, amplitude: float =1):
+    def encode_bits_to_audio(self, bits: np.ndarray, sample_rate: int = 44100, duration: float = 0.3, amplitude: float =1)-> np.ndarray:
         """
         Encode a list of bits into an audio signal.
         Parameters:
@@ -76,8 +76,8 @@ class Sender:
         tranmission_msg_in_changed_base = self.change_base(bits, self.base)
 
         for i in tranmission_msg_in_changed_base:
-            audio_signal = np.append(audio_signal, self.generate_tone(self.frequencies[int(i)], duration/2, sample_rate, amplitude))
-            audio_signal = np.append(audio_signal, self.generate_tone(self.frequencies[0], duration/2, sample_rate, amplitude))
+            audio_signal = np.append(audio_signal, self.generate_waves(self.frequencies[int(i)], duration/2, sample_rate, amplitude))
+            audio_signal = np.append(audio_signal, self.generate_waves(self.frequencies[0], duration/2, sample_rate, amplitude))
         return audio_signal
 
 
