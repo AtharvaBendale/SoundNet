@@ -33,11 +33,11 @@
 % Preamble, Manchester encoding, etc.
 To ensure the proper reception of transmitted signal from the sender's device, we are using the following methods:
 \begin{itemize}
+    \item \textbf{Multiple-bit Encoding:} We are encoding multiple bits (6 bits) into a single tone. These tones are set uniformly at a gap of 200 Hz starting from 1000 Hz, with a total of 64 frequencies available for encoding data.
+    \item \textbf{Special Sequence}: A distinct sequence of bits is used to signal the start of the message. This sequence is $0^{5n}1^n$ (where $n=6$). When the receiver detects at least 5 consecutive tones corresponding to $0^n$ (5 tones of a specific frequency, in this case, 1000 Hz), followed by a tone for $1^n$ (in this case, 13600 Hz), it begins listening for the preamble.
 
-    \item \textbf{Special Sequence}: We are using a special sequence of bits to mark the start of the message. This sequence is \texttt{000001}. When the reciever detects at leas 5 consecutive 0s, followed by a 1, it starts listening for the preamble. 
-    \item \textbf{Preamble} : The preamble (5 bits) consists of the length of the original message encoded in binary. We then use a function \texttt{transmissionLength()} to get the length of the transmitted message after preamble, and receive the message accordingly. 
-    \item \textbf{Return To Zero}: We are using the Return to Zero (RZ) encoding scheme to encode the bits. In this scheme, the signal returns to zero after each bit interval. This ensures that the receiver can easily detect the start and end of each bit. To encode a 0, we transmit a low frequency tone (1000 Hz) for half the bit duration and a middle frequency tone (2000 Hz) for the other half. For a 1, we transmit a high frequency tone (4000 Hz) for the first half and a middle frequency tone (2000 Hz) for the second half.  
-
+    \item \textbf{Preamble}: The preamble consists of 5 bits representing the length of the original message, encoded in binary. This binary list is then converted into the new base (64) after appending the necessary number of zeros to the right, ensuring that its length is divisible by $\log_2(\text{base})$ (which is 6 in this case).
+    \item \textbf{Return to Zero (RZ) Encoding}: We are using the Return to Zero (RZ) encoding scheme to encode the tones. In this scheme, the signal returns to a default frequency of 800 Hz (denoted by \(\psi\)) after each message tone (6 bits). The tones are set in an arithmetic progression, with \texttt{0} at \texttt{1000 Hz}, \texttt{1} at \texttt{1200 Hz}, and \texttt{63} at \texttt{13600 Hz}. This approach ensures that the receiver can clearly distinguish the start and end of each tone. We selected RZ encoding over Manchester encoding because the latter resulted in excessive errors due to uneven tone durations caused by hardware limitations in our speakers.
 
 \end{itemize}
 \section{Error Detection}
@@ -95,44 +95,35 @@ for _ in range(0, int(sample_rate / 1024 * duration)):
 To mitigate noise, we run the \texttt{calibrate} function to determine the average noise level in various frequency ranges of the received audio signal. We then use this information to filter out noise from the audio signal by subtracting the average noise level from the signal's power spectrum. This process helps improve the accuracy of frequency detection and bit decoding.
 \begin{tcolorbox}[colback=black!10!white, colframe=black]
 \begin{verbatim}
+stream, audio = self.open_audio_stream(sample_rate)
+
 for _ in range(0, segment_size*white_noise_sample_size, segment_size):
-  segment = self.receive_audio(stream, bit_duration, sample_rate)
-  freqs, power = signal.welch(segment, sample_rate)
-  low_freq_power = np.sum(power[(freqs >= self.low_freq-100) & 
-                                                    (freqs <= self.low_freq+100)])
-    mid_freq_power = np.sum(power[(freqs >= self.mid_freq-100) & 
-                                                    (freqs <= self.mid_freq+100)])
-    high_freq_power = np.sum(power[(freqs >= self.high_freq-100) & 
-                                                    (freqs <= self.high_freq+100)])
-
-    self.low_noise_avg += low_freq_power
-    self.high_noise_avg += high_freq_power
-    self.mid_noise_avg += mid_freq_power
-
-self.low_noise_avg = self.low_noise_avg / white_noise_sample_size
-self.high_noise_avg = self.high_noise_avg / white_noise_sample_size
-self.mid_noise_avg = self.mid_noise_avg / white_noise_sample_size
-
+    segment = self.receive_audio(stream, duration, sample_rate)
+    freqs, power = signal.welch(segment, sample_rate)
+    for i in range(self.base+1):
+        self.noise[i] += np.sum(power[(freqs >= self.freq[i]-100) & (freqs <= self.freq[i]
+                                                            +100)])
+for i in range(self.base+1):
+    self.noise[i] = self.noise[i]/white_noise_sample_size
 \end{verbatim}
 \end{tcolorbox}
 
 \subsection{Frequency-Based Decoding}
 
-The core of the reception mechanism involves detecting the frequency components of the received audio signal to determine the transmitted bits. Each bit is encoded as a specific frequency tone (1000 Hz for bit 0 and 3000 Hz for bit 1). After segmenting the audio signal into smaller chunks corresponding to each bit's duration, we analyze the frequency content of each segment (received using PyAudio) by applying Welch's method, implemented using the \texttt{signal} library from SciPy, for estimating power spectral density.
+The core of the reception mechanism involves detecting the frequency components of the received audio signal to determine the transmitted tone. After segmenting the audio signal into smaller chunks corresponding to each tone's duration (0.15 seconds), we analyze the frequency content of each segment (received using PyAudio) by applying Welch's method, implemented using the \texttt{signal} library from SciPy, for estimating power spectral density.
 \begin{tcolorbox}[colback=black!10!white, colframe=black]
     
 \begin{verbatim} 
-freqs, power = signal.welch(segment, sample_rate) 
-low_freq_power = np.sum(power[(freqs >= 900) & (freqs <= 1100)])
-high_freq_power = np.sum(power[(freqs >= 2900) & (freqs <= 3100)])
-
-if low_freq_power > high_freq_power: 
-    bits.append(0) 
-else: 
-    bits.append(1) \end{verbatim}
+freqs, power = signal.welch(segment, sample_rate)
+for i in  range(self.base+1):
+    freq_power[i] = np.abs(np.sum(power[(freqs >= self.freq[i]-100) & (freqs <= self.freq[i]
+                                                    +100)]) - self.noise[i])
+max_ind=np.argmax(freq_power) \end{verbatim}
 \end{tcolorbox}
 
-By summing the power within predefined frequency ranges, we can classify each segment as either a 0 or a 1 depending on which frequency range exhibits higher power. This method improves the robustness of frequency detection compared to simply using the Fast Fourier Transform (FFT), as it better handles noisy signals and overlapping frequencies.
+By summing the power within predefined frequency ranges, we can classify each segment according to its corresponding tone, denoted by \( t \in \{0, 1, \ldots, 63\} \cup \{\psi\} \), where \(\psi\) represents the tone corresponding to the default frequency. These tones, excluding \(\psi\), can then be converted into their binary representations to extract the actual bits. This approach enhances the robustness of frequency detection compared to using the Fast Fourier Transform (FFT) alone. Combined with the noise reduction techniques from step 1, it better manages noise and interference in the audio signal, whereas relying solely on FFT's peak might result in detecting noise peaks instead. Additionally, this method does not require consideration of frequency ranges outside the signal's relevant spectrum.
+
+
 
 
 \section{Citations}
