@@ -27,7 +27,7 @@ def send() -> None:
 
     # The preamble is the binary form of the length of the message
     print(f"The preamble is :", preamble(bits))
-    print(f"The combined transmission is : 01{preamble(bits)}{''.join([str(element) for element in encoding])}")
+    print(f"The combined transmission is : {preamble(bits)}{''.join([str(element) for element in encoding])}")
 
     # Encoding the preamble and the message to be transmitted to audio signals
     sender = Sender(64)

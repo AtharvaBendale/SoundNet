@@ -78,7 +78,6 @@ class Sender:
         for i in tranmission_msg_in_changed_base:
             audio_signal = np.append(audio_signal, self.generate_tone(self.frequencies[int(i)], duration/2, sample_rate, amplitude))
             audio_signal = np.append(audio_signal, self.generate_tone(self.frequencies[0], duration/2, sample_rate, amplitude))
-        print(tranmission_msg_in_changed_base)
         return audio_signal
 
 
