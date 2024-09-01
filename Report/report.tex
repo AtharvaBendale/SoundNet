@@ -41,10 +41,10 @@ To ensure the proper reception of transmitted signal from the sender's device, w
 
 \end{itemize}
 \section{Error Detection}
-To detect two bits of error in the transmitted message, our system uses a CRC-k algorithm with Hamming distance 5. In this algorithm we are using the polynomials under an assumption of low, constant bit error rate.
+To detect two bits of error in the transmitted message, our system uses a CRC-k algorithm with Hamming distance 5, this ensures that we could also correct atmost 2 errors.
 \begin{tcolorbox}[colback=black!10!white, colframe=black, title=Error Detection Algorithm ]
     \begin{verbatim}
-1. Choose a CRC-k polynomial , where k is chosen according to the message length and use
+1. Choose a CRC-k polynomial with hamming distance 5, where k is chosen according to the message length and use
 the binary string of the polynomial as divisor
 2. Append k 0s to the message and use this as the dividend and store the remainder as CRC 
 code C(x) and send the xor of dividend and C(x)
@@ -52,10 +52,16 @@ code C(x) and send the xor of dividend and C(x)
 with P(x) as dividend and C(x) as divisor. If the remainder is 0 it means that the P(x) is 
 error free otherwise it has error\end{verbatim}
 \end{tcolorbox}
-To further optimise this procedure, we are using different degree polynomials for reducing the length of transmission as the length is variable. This information is shared with the receiver through the help of the preamble which has the length encoded in it. \\
-All the chosen polynomials have the property that each remainder is mapped to a single transmitted message which has its atmost two bits altered. This property makes the polynomials special and ensures the correctness of our algorithm.
+To further optimise this procedure, we are using as small polynomials as possible corresponding to the message length for reducing the size of transmission as the message length is variable. This information is shared with the receiver with the help of the preamble which has the length encoded in it. \\
+All the chosen polynomials have the property that each remainder is mapped to a single transmitted message which has its atmost two bits altered, due to the property of minimum hamming distance being 5. This property makes the polynomials special and ensures the correctness of our algorithm.
 \section{Error Correction}
-If our system detects any error using the error detection algorithm, we iterate over all possible pairs of indices , flip those bits and use the subroutine of error detection algorithms to check whether the current mutated message is error free or not. This method ensures not to find another correct code word because we have chosen a Hamming Distance of 5, and even if it ends up flipping 2 wrong bits (4 flipped in total along with the original error bits) it will not end up at another correct code word.  Since the length of the original message is upto 20 bits and the transmitted message can be upto 30 bits, the computation of \( \binom{30}{2} \) can be done quickly. The flowchart of the above procedure : 
+The error correction procedure empolyed is as follows:
+\begin{itemize}
+    \item If no error is detected then we do nothing (the correctness of this due to the assumption that a maximum of 2 bits can be erroneous)
+    \item We iterate over all possible pairs of indices, flip those bits and use our polynomial division subroutine to check if the new message is divisible by the polynomial, if it is then this new message would be the original error free message
+    \item If no such pair of indices is found, we iterate over all single bit errors and obtain the corrected message
+\end{itemize}
+The above procedure outputs the original message if our transmission has no more than 2 bit errors.
 \begin{center}
 \begin{tikzpicture}[node distance=2.5cm] % Adjust node distance for better spacing
 
@@ -64,7 +70,7 @@ If our system detects any error using the error detection algorithm, we iterate 
 \node (crc) [startstop, below of=received] {CRC Calculation};
 \node (decision) [decision, below of=crc] {R=0};
 \node (errorfree) [startstop, below of=decision, yshift=-1.7cm] {Error Free Data};
-\node (ij) [startstop, right of=decision, xshift=3cm]{Iterate over (i,j)};
+\node (ij) [startstop, right of=decision, xshift=3cm]{Iterate over (i,j) and (i)};
 
 % Arrows
 \draw [arrow] (received) -- (crc);
@@ -75,6 +81,7 @@ If our system detects any error using the error detection algorithm, we iterate 
 
 \end{tikzpicture}
 \end{center}
+\noindent Our implementation has support for correction upto triple bit errors too, this can be used via passing an optional argument to the encodeCrc and decodeCrc functions.
 \section{Reception}
 
 The reception process in our system focuses on accurately converting the transmitted audio signal back into the original binary sequence. This involves a series of signal processing steps designed to handle noise, detect frequency tones, and decode them into bits. Below, we describe the major components of the reception pipeline.
