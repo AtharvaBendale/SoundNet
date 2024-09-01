@@ -1,0 +1,168 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{ulem}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{gensymb}
+\usepackage{tcolorbox}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyvrb}
+
+\usepackage[utf8]{inputenc}
+\usepackage{pmboxdraw}
+
+\lstdefinestyle{folderstyle}{
+  basicstyle=\ttfamily,
+  backgroundcolor=\color{gray!10},
+  frame=single,
+  columns=flexible,
+  keepspaces=true,
+  breaklines=true
+}
+
+\usetikzlibrary{shapes.geometric, arrows}
+
+\tikzstyle{startstop} = [ellipse, minimum width=1.5cm, minimum height=1cm, text centered, draw=black, fill=gray!30]
+\tikzstyle{process} = [rectangle, minimum width=1.5cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
+\tikzstyle{decision} = [diamond, minimum width=1.5cm, minimum height=1cm, text centered, draw=black, fill=green!30]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
+% Define the tcolorbox style for single line boxes without titles
+\tcbuselibrary{listings}
+\tcbset{
+  mybox/.style={
+    colframe=black,        % Frame color
+    colback=black!25!white, % Background color
+    boxrule=0.5mm,          % Thickness of the frame
+    arc=1mm,                % Rounded corners
+    outer arc=1mm,
+    boxsep=2mm,             % Space between the frame and the content
+    height=5ex,            % Height of the box
+    width=0.9\textwidth,    % Width of the box
+    top=0pt,                % No extra space on top
+    bottom=0pt,             % No extra space on bottom
+    left=1mm,               % Space on the left
+    right=1mm               % Space on the right
+  }
+}
+
+\title{Program Documentation: CS 378 Lab 2}
+\author{Atharva Bendale (22B0901), Nivesh Aggarwal (22B0912), \\ Dhvanil Gheewala (22B0923), Vishal Bysani (22B1061)}
+
+\begin{document}
+% \setlength{\itemsep}{-1cm}
+\maketitle
+
+\section{Included Files and Dependencies}
+
+\subsection*{Dependencies}
+\begin{itemize}
+    \item NumPy:
+    \begin{tcolorbox}
+      \texttt{pip install numpy}
+    \end{tcolorbox}
+    
+    \item SciPy:
+    \begin{tcolorbox}
+      \texttt{pip install scipy}
+    \end{tcolorbox}
+    
+    \item Pyaudio:
+    \begin{tcolorbox}
+      \texttt{sudo apt-get install portaudio19-dev}\\
+    % \end{tcolorbox}
+    % \begin{tcolorbox}[mybox]
+        \texttt{pip install pyaudio}
+    \end{tcolorbox}
+\end{itemize}
+
+\subsection*{Files included}
+\begin{Verbatim}[frame=single]
+22b0901_22b0912_22b0923_22b01061_CS378_lab2.tar.gz/
+├── main.py
+├── receiver.py
+├── sender.py
+├── crc.py
+└── Report/
+    ├── 22b0901_22b0912_22b0923_22b01061_dd_CS378_lab2.pdf
+    ├── 22b0901_22b0912_22b0923_22b01061_dd_CS378_lab2.tex
+    ├── documentation.pdf
+    └── documentation.tex
+\end{Verbatim}
+
+% \noindent \textbf{main.py:} Main script for sending and receiving binary messages using CRC encoding, audio transmission, and error correction.\\
+% \noindent \textbf{receiver.py:} Receives and decodes audio signals into binary messages using Welch's method of frequency analysis.\\
+% \noindent \textbf{sender.py:} Generates and transmits audio signals representing binary messages using frequency modulation.\\
+% \noindent \textbf{crc.py:} Implements 2-bit error correction with CRC generating polynomials with length depending upon the length of the input message.
+\subsubsection*{main.py}
+Main script for sending and receiving binary messages using CRC encoding, audio transmission, and error correction\\
+\textbf{Functions:}\vspace{-0.25cm}
+\begin{itemize}\setlength\itemsep{-0.1cm}
+    \item \textbf{send :} Takes input message, number of errors and its position from the user , creates transmission message by appending special sequence, preamble and CRC bits
+    \item \textbf{recv :} Calibrates the system for background noise, receives signals, decodes it to bits and corrects the error bits and prints the message
+\end{itemize}
+\subsubsection*{receiver.py}
+Receives and decodes audio signals into binary messages using Welch's method of frequency analysis\\
+\textbf{Functions:}\vspace{-0.25cm}
+\begin{itemize}\setlength\itemsep{-0.1cm}
+    \item \textbf{open\_audio\_stream :} Opens the audio stream
+    \item \textbf{receive\_audio :} Receive an audio signal from the default audio input device for the specified duration
+    \item \textbf{calibrate :} Calculates the ambient noise power for each frequency range
+    \item \textbf{decode\_audio\_to\_bits :} Decode an audio signal to a list of bits
+\end{itemize}
+\subsubsection*{sender.py}
+Generates and transmits audio signals representing binary messages using frequency modulation\\
+\textbf{Functions:}\vspace{-0.25cm}
+\begin{itemize}\setlength\itemsep{-0.1cm}
+    \item \textbf{generate\_tone :} Generate a sine wave tone of given frequency and duration
+    \item \textbf{encode\_bits\_to\_audio :} Encode a list of bits into an audio signal
+    \item \textbf{send\_audio :} Send an audio signal to the default audio output device
+\end{itemize}
+\subsubsection*{crc.py}
+Implements 2-bit error correction with CRC generating polynomials with length depending upon the length of the input message\\
+\textbf{Functions:}\vspace{-0.25cm}
+\begin{itemize}\setlength\itemsep{-0.1cm}
+    \item \textbf{preamble :} returns the binary representation of preamble
+    \item \textbf{polyDivision :} Performs polynomial division for CRC calculation
+    \item \textbf{bruteCheck :} Iterates over all possible double/triple bit errors and checks whether the modified dividend is perfectly divisible by the polynomial for finding the correct message
+    \item \textbf{encodeCrc :} Encodes the given message and adds redundancy using CRC for error detection and correction
+    \item \textbf{decodeCrc :} Decodes the given transmission, detects and corrects errors
+\end{itemize}
+\section{Usage}
+
+\subsection*{Sender's End}
+
+To initiate the transmission process, follow these steps:
+
+\begin{tcolorbox}
+    python3 main.py - \hspace{-0.1cm}-send
+\end{tcolorbox}
+
+\begin{enumerate}
+    \item Enter the message you wish to transmit.
+    \item Specify the number of bit errors you want to introduce.
+    \item Provide the fractions at which you want to introduce the errors.
+    \item Press Enter to start the transmission.
+\end{enumerate}
+
+\subsection*{Receiver's End}
+
+To receive and process the transmitted message, follow these steps:
+
+\begin{tcolorbox}
+    python3 main.py - \hspace{-0.1cm}-recv
+\end{tcolorbox}
+
+\begin{enumerate}
+    \item Run the command above in the terminal.
+    \item Wait for the incoming transmission.
+    \item The received message will be displayed in the terminal.
+\end{enumerate}
+
+\end{document}
