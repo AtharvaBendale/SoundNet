@@ -44,8 +44,8 @@ To ensure the proper reception of transmitted signal from the sender's device, w
 To detect two bits of error in the transmitted message, our system uses a CRC-k algorithm with Hamming distance 5, this ensures that we could also correct atmost 2 errors.
 \begin{tcolorbox}[colback=black!10!white, colframe=black, title=Error Detection Algorithm ]
     \begin{verbatim}
-1. Choose a CRC-k polynomial with hamming distance 5, where k is chosen according to the message length and use
-the binary string of the polynomial as divisor
+1. Choose a CRC-k polynomial with hamming distance 5, where k is chosen according to the
+ message length and use the binary string of the polynomial as divisor
 2. Append k 0s to the message and use this as the dividend and store the remainder as CRC 
 code C(x) and send the xor of dividend and C(x)
 3. When the modified message P(x) is received , our system uses binary polynomial division
@@ -81,7 +81,7 @@ The above procedure outputs the original message if our transmission has no more
 
 \end{tikzpicture}
 \end{center}
-\noindent Our implementation has support for correction upto triple bit errors too, this can be used via passing an optional argument to the encodeCrc and decodeCrc functions.
+\noindent Our implementation has support for correction upto triple bit errors too, this can be used via passing an optional argument to the \texttt{encodeCrc} and \texttt{decodeCrc} functions.
 \section{Reception}
 
 The reception process in our system focuses on accurately converting the transmitted audio signal back into the original binary sequence. This involves a series of signal processing steps designed to handle noise, detect frequency tones, and decode them into bits. Below, we describe the major components of the reception pipeline.
