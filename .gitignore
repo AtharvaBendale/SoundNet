@@ -4,3 +4,5 @@ Report/*
 # Except the report.tex and report.pdf files
 !Report/report.tex
 !Report/report.pdf
+!Report/documentation.pdf
+!Report/documentation.tex
