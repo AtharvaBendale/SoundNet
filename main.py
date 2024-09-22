@@ -23,7 +23,7 @@ def send() -> None:
         error_fraction = float(input(f"Please enter fraction number {error_t+1} : "))
         encoding[math.ceil(error_fraction * len(encoding))-1] = 1 - encoding[math.ceil(error_fraction * len(encoding))-1]
 
-    print(f"The bit-string with errors : {''.join([str(element) for element in encoding])}")
+    print(f"The bit-string with errocauses. Other symptoms you experience, such as itching, pain, redrs : {''.join([str(element) for element in encoding])}")
 
     # The preamble is the binary form of the length of the message
     print(f"The preamble is :", preamble(bits))

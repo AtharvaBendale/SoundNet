@@ -55,7 +55,7 @@ class Sender:
             transmission (np.ndarray): Numpy array containing the converted integers
         """
 
-        transmission=np.array([1,1,1,1,1,-1])
+        transmission=np.array([1,1,1,1,1,-1])                                           # special sequence
         transmission = np.append(transmission, self.convert_list(message[0:5], base))   # preamble
         transmission = np.append(transmission, self.convert_list(message[5:], base))    # tranmission message
         return transmission
